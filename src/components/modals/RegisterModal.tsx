@@ -18,6 +18,7 @@ import { errorToast } from "@/lib/utils";
 import useLoginModal from "@/hooks/useLoginModal";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { toast } from "react-hot-toast";
 
 const RegisterModal = () => {
   const router = useRouter();
@@ -87,18 +88,10 @@ const RegisterModal = () => {
       footer={
         <div className="flex flex-col gap-4 mt-3">
           <hr />
-          <Button
-            variant="outline"
-            icon={FcGoogle}
-            onClick={() => signIn("google")}
-          >
+          <Button variant="outline" icon={FcGoogle} onClick={() => signIn("google")}>
             Continue with Google
           </Button>
-          <Button
-            variant="outline"
-            icon={AiFillGithub}
-            onClick={() => signIn("github")}
-          >
+          <Button variant="outline" icon={AiFillGithub} onClick={() => signIn("github")}>
             Continue with Github
           </Button>
           <div className="text-neutral-500 mt-4 font-light flex items-center justify-center gap-2">

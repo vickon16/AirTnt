@@ -11,12 +11,14 @@ import { signOut } from "next-auth/react";
 import { errorToast } from "@/lib/utils";
 import useRentModal from "@/hooks/useRentModal";
 import { useUserContext } from "../providers/UserProvider";
+import { useRouter } from "next/navigation";
 
 const UserMenu = () => {
   const {currentUser} = useUserContext();
   const registerModal = useRegisterModal();
   const loginModal = useLoginModal();
   const rentModal = useRentModal();
+  const router = useRouter();
 
   const handleSignOut = async () => {
     try {
@@ -56,10 +58,10 @@ const UserMenu = () => {
             <div className="flex flex-col">
               {currentUser ? (
                 <>
-                  <MenuItem onClick={() => {}} label="My trips" />
-                  <MenuItem onClick={() => {}} label="My favorites" />
-                  <MenuItem onClick={() => {}} label="My Reservations" />
-                  <MenuItem onClick={() => {}} label="My properties" />
+                  <MenuItem onClick={() => router.push("/trips")} label="My trips" />
+                  <MenuItem onClick={() => router.push("/favorites")} label="My favorites" />
+                  <MenuItem onClick={() => router.push("/reservations")} label="My Reservations" />
+                  <MenuItem onClick={() => router.push("/properties")} label="My properties" />
                   <MenuItem onClick={rentModal.onOpen} label="AirTnT My home" />
 
                   <hr />

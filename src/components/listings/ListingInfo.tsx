@@ -2,7 +2,7 @@
 
 import { CategoryType } from "@/data/categories";
 import useCountries from "@/hooks/useCountries";
-import { safeListings } from "@/types";
+import { SafeListings } from "@/types";
 import { FC } from "react";
 import Avatar from "../Avatar";
 import ListingCategory from "./ListingCategory";
@@ -13,7 +13,7 @@ const Map = dynamic(() => import("../Map"), {
 });
 
 interface ListingInfoProps {
-  listing: safeListings;
+  listing: SafeListings;
   category: CategoryType;
 }
 
@@ -31,7 +31,7 @@ const ListingInfo: FC<ListingInfoProps> = ({ category, listing }) => {
   const coordinates = getByValue(locationValue)?.latlng;
 
   return (
-    <section className="col-span-4 flex flex-col gap-8">
+    <section className="md:col-span-4 flex flex-col gap-8">
       <div className="flex flex-col gap-2">
         <div className="text-xl font-semibold flex items-center gap-2">
           <p>Hosted by {user?.name}</p>

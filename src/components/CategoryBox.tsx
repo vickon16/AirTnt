@@ -5,28 +5,23 @@ import { cn, generateSearchURL } from "@/lib/utils";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FC, useCallback } from "react";
 
-
 interface CategoryBoxProps {
   item: CategoryType;
   selected?: boolean;
 }
 
-const CategoryBox: FC<CategoryBoxProps> = ({
-  item,
-  selected,
-}) => {
+const CategoryBox: FC<CategoryBoxProps> = ({ item, selected }) => {
   const router = useRouter();
   const params = useSearchParams();
   const { icon: Icon, label } = item;
 
   const handleClick = useCallback(() => {
     if (!params) return;
-    const url = generateSearchURL(params, "category", label)
-    
-    router.push(url);
-  }, [params, label, router])
+    const url = generateSearchURL(params, { category: label.toLowerCase() });
 
-  
+    router.push(url);
+  }, [params, label, router]);
+
   return (
     <div
       className={cn(

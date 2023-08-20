@@ -1,22 +1,20 @@
 "use client";
 
 import useCountries from "@/hooks/useCountries";
-import { Reservation } from "@prisma/client";
 import { format } from "date-fns";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { FC, MouseEvent, useCallback, useMemo } from "react";
 import HeartButton from "../HeartButton";
 import Button from "../ui/Button";
-import { safeListings } from "@/types";
+import { SafeListings, SafeReservations } from "@/types";
 
 interface ListingCardProps {
-  data: safeListings;
-  reservation?: Reservation;
-  onAction?: (id: string) => void;
+  data: SafeListings;
+  reservation?: SafeReservations;
+  onAction?: () => void;
   disabled?: boolean;
   actionLabel?: string;
-  actionId?: string;
 }
 
 const ListingCard: FC<ListingCardProps> = ({
@@ -24,7 +22,6 @@ const ListingCard: FC<ListingCardProps> = ({
   reservation,
   onAction,
   disabled,
-  actionId = "",
   actionLabel,
 }) => {
   const router = useRouter();
@@ -36,16 +33,14 @@ const ListingCard: FC<ListingCardProps> = ({
       e.stopPropagation();
       if (disabled) return;
 
-      onAction?.(actionId);
+      onAction?.();
     },
-    [onAction, actionId, disabled]
+    [onAction, disabled]
   );
 
   const price = useMemo(() => {
     // return reservation price if there is, or the listing price
-    if (reservation) {
-      return reservation.totalPrice;
-    }
+    if (reservation) return reservation.totalPrice;
 
     return data.price;
   }, [reservation, data.price]);
@@ -77,7 +72,7 @@ const ListingCard: FC<ListingCardProps> = ({
       </div>
 
       {/* body content */}
-      <div className="flex flex-col leading-6 mt-1">
+      <div className={`flex flex-col leading-6 mt-1 ${reservation && "gap-y-1"}`}>
         <div className="font-bold">
           {location?.region}, {location?.label}
         </div>
@@ -87,7 +82,7 @@ const ListingCard: FC<ListingCardProps> = ({
         </div>
 
         <div className="flex flex-row items-center gap-1">
-          <div className="font-semibold">$ {price}</div>
+          <div className="font-bold">$ {price}</div>
           {!reservation ? <div className="font-light">night</div> : null}
         </div>
 

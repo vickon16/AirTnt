@@ -1,35 +1,28 @@
 "use client";
 
 import getListingsById from "@/actions/getListingsById";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { FC, useCallback, useEffect, useMemo, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { FC, useCallback, useEffect, useState } from "react";
 import EmptyState from "../EmptyState";
 import { CategoryType, categories } from "@/data/categories";
 import ListingHead from "./ListingHead";
 import ListingInfo from "./ListingInfo";
 import useLoginModal from "@/hooks/useLoginModal";
 import { useRouter } from "next/navigation";
-import { differenceInCalendarDays, eachDayOfInterval } from "date-fns";
-import { Reservation } from "@prisma/client";
+import { differenceInCalendarDays} from "date-fns";
 import { useUserContext } from "../providers/UserProvider";
 import { API, errorToast, stringCapitalize } from "@/lib/utils";
 import { toast } from "react-hot-toast";
 import ListingReservation from "./ListingReservation";
 import { Range } from "react-date-range";
+import ListingDetailsLoader from "../loaders/ListingDetailsLoader";
+import { ReservationDataType, ReservationSchema } from "@/lib/zodValidators";
 
 const initialDateRange = {
   startDate: new Date(),
   endDate: new Date(),
   key: "selection",
 };
-
-interface MutationDataType {
-  userId: string;
-  listingId: string;
-  startDate: Date;
-  endDate: Date;
-  totalPrice: number;
-}
 
 interface ListingDetailsProps {
   listingId: string;
@@ -40,33 +33,36 @@ const ListingDetails: FC<ListingDetailsProps> = ({ listingId }) => {
   const loginModal = useLoginModal();
   const router = useRouter();
   const [dateRange, setDateRange] = useState<Range>(initialDateRange);
+  const queryClient = useQueryClient();
 
   // query for getting listings
-  const query = useQuery({
+  const listingQuery = useQuery({
     enabled: listingId !== null,
-    queryKey: ["listing", `${listingId}`],
+    queryKey: ["listing", {listingId}],
     queryFn: () => getListingsById(listingId),
+    onError : (error) => errorToast(error, "Failed to get listings")
   });
 
   // mutations for creating reservations
   const mutation = useMutation({
     mutationKey: ["create Reservations"],
-    mutationFn: async (mutationData: MutationDataType) => {
-      const { data } = await API.post(`/api/reservations`, mutationData);
+    mutationFn: async (mutationData: ReservationDataType) => {
+      const parsedData = ReservationSchema.parse(mutationData);
+      const { data } = await API.post(`/api/reservations`, parsedData);
       return data;
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({queryKey : ["reservations"]})
       toast.success("Reservation created successfully"),
-        setDateRange(initialDateRange);
-      // redirect
-      router.refresh();
+      setDateRange(initialDateRange);
+      router.push("/trips");
     },
     onError: (error) => errorToast(error, "Failed to create reservation"),
   });
 
-  const [totalPrice, setTotalPrice] = useState(query?.data?.price);
-  const reservations: Reservation[] = useMemo(() => [], []);
+  const [totalPrice, setTotalPrice] = useState(listingQuery?.data?.price);
 
+  // to update the total price based on date Range
   useEffect(() => {
     if (dateRange.startDate && dateRange.endDate) {
       const dayCount = differenceInCalendarDays(
@@ -75,13 +71,13 @@ const ListingDetails: FC<ListingDetailsProps> = ({ listingId }) => {
       );
 
       // if there is a difference in days and there is a price
-      if (dayCount && query.data?.price) {
-        setTotalPrice(dayCount * query.data.price);
+      if (dayCount && listingQuery.data?.price) {
+        setTotalPrice(dayCount * listingQuery.data.price);
       } else {
-        setTotalPrice(query.data?.price);
+        setTotalPrice(listingQuery.data?.price);
       }
     }
-  }, [query.data?.price, dateRange]);
+  }, [listingQuery.data?.price, dateRange]);
 
   const onCreateReservation = useCallback(() => {
     if (!currentUser) return loginModal.onOpen();
@@ -99,27 +95,9 @@ const ListingDetails: FC<ListingDetailsProps> = ({ listingId }) => {
     });
   }, [currentUser, dateRange, listingId, loginModal, mutation, totalPrice]);
 
-  const disabledDates = useMemo(() => {
-    let dates: Date[] = [];
+  if (listingQuery.isLoading) return <ListingDetailsLoader />;
 
-    // creating a range of dates
-    reservations.forEach((reservation) => {
-      const range = eachDayOfInterval({
-        start: new Date(reservation.startDate),
-        end: new Date(reservation.endDate),
-      });
-
-      dates = [...dates, ...range];
-    });
-
-    return dates;
-  }, [reservations]);
-
-  if (query.isLoading) {
-    return <></>;
-  }
-
-  if (query.error || !query.data) {
+  if (listingQuery.error || !listingQuery.data) {
     return (
       <EmptyState
         title="No Listing Details Found"
@@ -129,7 +107,7 @@ const ListingDetails: FC<ListingDetailsProps> = ({ listingId }) => {
     );
   }
 
-  const categoryCapitalize = stringCapitalize(query.data.category);
+  const categoryCapitalize = stringCapitalize(listingQuery.data.category);
 
   const category = categories.find(
     (item) => item.label === categoryCapitalize
@@ -139,21 +117,20 @@ const ListingDetails: FC<ListingDetailsProps> = ({ listingId }) => {
     <section>
       <div className="max-w-6xl mx-auto">
         <div className="flex flex-col gap-3">
-          <ListingHead listing={query.data} />
+          <ListingHead listing={listingQuery.data} />
 
-          <div className="grid grid-col-1 md:grid-col-7 md:gap-10 mt-6">
-            <ListingInfo category={category} listing={query.data} />
+          <div className="grid grid-cols-1 md:grid-cols-7 md:gap-10 mt-6">
+            <ListingInfo category={category} listing={listingQuery.data} />
 
-            <div className="order-first mb-10 md:order-last md:col-span-3">
-              <ListingReservation
-                listing={query.data}
-                onChangeDate={(value) => setDateRange(value)}
-                dateRange={dateRange}
-                onSubmit={onCreateReservation}
-                disabled={mutation.isLoading}
-                disabledDates={disabledDates}
-              />
-            </div>
+            <ListingReservation
+              listingId={listingId}
+              price={listingQuery?.data.price}
+              totalPrice={totalPrice}
+              onChangeDate={(value) => setDateRange(value)}
+              dateRange={dateRange}
+              onSubmit={onCreateReservation}
+              disabled={mutation.isLoading}
+            />
           </div>
         </div>
       </div>

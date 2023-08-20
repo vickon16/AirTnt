@@ -10,7 +10,7 @@ interface ProviderProps {
 
 if (process.env.NODE_ENV === "production") disableReactDevTools();
 
-export const queryClient = new QueryClient();
+const queryClient = new QueryClient();
 
 const ReactQueryProvider: FC<ProviderProps> = ({ children }) => {
   return (

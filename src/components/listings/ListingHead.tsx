@@ -1,7 +1,7 @@
 "use client";
 
 import useCountries from "@/hooks/useCountries";
-import { safeListings } from "@/types";
+import { SafeListings } from "@/types";
 import { FC } from "react";
 import Heading from "../Heading";
 import Image from "next/image";
@@ -10,7 +10,7 @@ import useFavorite from "@/hooks/useFavorites";
 import {AiFillStar} from "react-icons/ai"
 
 interface ListingHeadProps {
-  listing: safeListings;
+  listing: SafeListings;
 }
 
 const ListingHead: FC<ListingHeadProps> = ({ listing }) => {

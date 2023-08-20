@@ -113,6 +113,7 @@ const RentModal = () => {
       await API.post("/api/listings", formData);
       toast.success("Listing Created Successfully!");
       handleCloseRentModal();
+      router.refresh();
     } catch (error) {
       errorToast(error, "Failed to create Rent data!");
     } finally {
