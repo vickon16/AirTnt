@@ -33,5 +33,10 @@ export default withAuth(
 )
 
 export const config = {
-  matcher : sensitiveRoutes
+  matcher : [
+    "/trips",
+    "/reservations",
+    "/properties",
+    "/favorites",
+  ]
 }
